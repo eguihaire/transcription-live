@@ -50,6 +50,10 @@
     const statusEl = document.getElementById("status");
     const logEl = document.getElementById("log");
 
+    let pc = null;
+    let dc = null;
+    let stream = null;
+
     function setStatus(text) {
       statusEl.textContent = text;
     }
@@ -84,20 +88,21 @@
         const token = session.value;
 
         setStatus("Choisis l'onglet à partager...");
-        const stream = await navigator.mediaDevices.getDisplayMedia({
+        stream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
           audio: true
         });
 
         const audioTracks = stream.getAudioTracks();
         addLog("Audio tracks: " + audioTracks.length);
+        addLog("Video tracks: " + stream.getVideoTracks().length);
 
         if (!audioTracks.length) {
-          throw new Error("Aucune piste audio détectée. Il faut choisir un onglet et activer le partage audio.");
+          throw new Error("Aucune piste audio détectée. Choisis bien un onglet Chrome et active le partage audio.");
         }
 
         setStatus("Connexion Realtime...");
-        const pc = new RTCPeerConnection();
+        pc = new RTCPeerConnection();
 
         pc.onconnectionstatechange = () => {
           addLog("RTCPeerConnection state: " + pc.connectionState);
@@ -108,21 +113,22 @@
           addLog("ICE state: " + pc.iceConnectionState);
         };
 
-        stream.getTracks().forEach(track => pc.addTrack(track, stream));
+        // N'envoyer QUE l'audio
+        audioTracks.forEach(track => pc.addTrack(track, stream));
 
-        const channel = pc.createDataChannel("oai-events");
+        dc = pc.createDataChannel("oai-events");
 
-        channel.onopen = () => {
+        dc.onopen = () => {
           addLog("Data channel ouvert");
           setStatus("Transcription en cours...");
         };
 
-        channel.onerror = (e) => {
+        dc.onerror = (e) => {
           addLog("Erreur data channel");
           console.error(e);
         };
 
-        channel.onmessage = (event) => {
+        dc.onmessage = (event) => {
           let msg;
           try {
             msg = JSON.parse(event.data);
@@ -141,8 +147,7 @@
           }
 
           if (
-            msg.type === "conversation.item.input_audio_transcription.completed" &&
-            msg.transcript
+            msg.type === "conversation.item.input_audio_transcription.completed"
           ) {
             addText("\n");
           }
