@@ -3,16 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <title>Transcription live</title>
+
 <style>
 body{
-font-family:Arial;
+font-family:Arial, sans-serif;
 max-width:800px;
 margin:40px auto;
 }
+
 button{
-padding:10px 15px;
+padding:12px 18px;
 font-size:16px;
+cursor:pointer;
 }
+
 #output{
 border:1px solid #ccc;
 padding:20px;
@@ -20,6 +24,7 @@ margin-top:20px;
 min-height:200px;
 white-space:pre-wrap;
 }
+
 </style>
 </head>
 
@@ -41,7 +46,7 @@ startBtn.onclick = async () => {
 const tokenResponse = await fetch("/api/session");
 const session = await tokenResponse.json();
 
-const token = session.client_secret.value;
+const token = session.value;
 
 const pc = new RTCPeerConnection();
 
