@@ -14,22 +14,27 @@ export default async function handler(req, res) {
           session: {
             type: "realtime",
             model: "gpt-4o-realtime-preview",
+            output_modalities: ["text"],
             audio: {
               input: {
                 transcription: {
                   model: "gpt-4o-transcribe",
-                  language: "fr",
+                  language: "fr"
                 },
-              },
-            },
-          },
+                turn_detection: {
+                  type: "server_vad",
+                  create_response: false,
+                  interrupt_response: false
+                }
+              }
+            }
+          }
         }),
       }
     );
 
     const data = await response.json();
     res.status(response.status).json(data);
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
